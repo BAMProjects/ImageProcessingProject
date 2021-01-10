@@ -12,7 +12,7 @@ import math
 from random import randint,uniform
 img = cv2.imread("test.jpg")
 def rotate_right(image):
-  image = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
+  image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
   #image = cv2.rotate(src, cv2.ROTATE_180)
   #image = cv2.rotate(src, cv2.ROTATE_90_COUNTERCLOCKWISE)
   return image
@@ -38,24 +38,41 @@ def flip_image(image):
   return im_flip
 def brighntess_change(image,value):
     alpha = 1.3
-    beta = 6*value
     if(value<0):
-      image = np.clip(alpha * image - beta, 0, 255)
+        beta = 20* value
     else:
-      image = np.clip(alpha * image + beta, 0, 255)
+        beta = 10 * value
+
+
+    image = np.clip(alpha * image + beta, 0, 255)
 
     return image
 def contrast_change(image,value):
   F = (259(int(value*10) + 255)) / (255(259 - int(value*10)))
   image = int(int(F) * (image - 128) + 128)
   return image
-def change_brightness_of_image(image):
+def change_brightness_of_image(image,factor):
   # cv2 format to PIL format
   image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
   image = Image.fromarray(image)
   enhancer = ImageEnhance.Brightness(image)
+  factor=factor*0.1
 
-  factor = 0.6  # brightens the image
+
+
+  #factor = 3 # brightens the image
+  im_output = enhancer.enhance(factor)
+  return  im_output
+def change_contrast_of_image(image,factor):
+  # cv2 format to PIL format
+  image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+  image = Image.fromarray(image)
+  enhancer = ImageEnhance.Contrast(image)
+  factor=factor*0.1
+
+
+
+  #factor = 3 # brightens the image
   im_output = enhancer.enhance(factor)
   return  im_output
 def invert_image(image):
@@ -425,8 +442,8 @@ def random_filter_3(image):
   return cv2.merge((red_channel, green_channel, blue_channel))
 
 
-img = crop_image(img,250,250,100,100)
+img = change_brightness_of_image(img,0.5)
 #PIL format to cv2 format
-#img = np.array(img)
-#img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
+img = np.array(img)
+img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
 cv2.imwrite("imgtest.jpg",img)

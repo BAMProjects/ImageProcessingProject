@@ -20,14 +20,15 @@ import numpy as np
 
 class Ui_MainWindow(object):
     img = None
-    effectImage=None
+    effectImage= None
+    resetImage = None
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(869, 661)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.selectImageButton = QtWidgets.QPushButton(self.centralwidget)
-        self.selectImageButton.setGeometry(QtCore.QRect(350, 10, 81, 31))
+        self.selectImageButton.setGeometry(QtCore.QRect(260, 10, 81, 31))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -137,14 +138,24 @@ class Ui_MainWindow(object):
         self.invertButton.clicked.connect(self.invert_image)
         self.brightnessSlider = QtWidgets.QSlider(self.basicOperations)
         self.brightnessSlider.setGeometry(QtCore.QRect(120, 130, 160, 22))
-        self.brightnessSlider.setMinimum(-10)
-        self.brightnessSlider.setMaximum(10)
+        self.brightnessSlider.setMinimum(0)
+        self.brightnessSlider.setMaximum(20)
         self.brightnessSlider.setSingleStep(1)
-        self.brightnessSlider.setProperty("value", 0)
+        self.brightnessSlider.setProperty("value", 10)
         self.brightnessSlider.setOrientation(QtCore.Qt.Horizontal)
         self.brightnessSlider.setTickPosition(QtWidgets.QSlider.TicksBelow)
         self.brightnessSlider.setObjectName("brightnessSlider")
-        self.brightnessSlider.valueChanged.connect(self.contrast_change)
+        self.brightnessSlider.valueChanged.connect(self.brightness_change)
+        self.contrastSlider = QtWidgets.QSlider(self.basicOperations)
+        self.contrastSlider.setGeometry(QtCore.QRect(120, 160, 160, 22))
+        self.contrastSlider.setMinimum(0)
+        self.contrastSlider.setMaximum(20)
+        self.contrastSlider.setSingleStep(1)
+        self.contrastSlider.setProperty("value", 10)
+        self.contrastSlider.setOrientation(QtCore.Qt.Horizontal)
+        self.contrastSlider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self.contrastSlider.setObjectName("contrastSlider")
+        self.contrastSlider.valueChanged.connect(self.contrast_change)
         self.label_5 = QtWidgets.QLabel(self.basicOperations)
         self.label_5.setGeometry(QtCore.QRect(20, 130, 101, 16))
         self.label_5.setObjectName("label_5")
@@ -262,6 +273,13 @@ class Ui_MainWindow(object):
         self.pushButton_29.setObjectName("pushButton_29")
         self.pushButton_29.clicked.connect(self.random_filter_3)
         self.gridLayoutEffects.addWidget(self.pushButton_29, 6, 2, 1, 1)
+        self.resetImageButton = QtWidgets.QPushButton(self.centralwidget)
+        self.resetImageButton.setGeometry(QtCore.QRect(360, 10, 81, 31))
+        self.resetImageButton.clicked.connect(self.reset_image)
+        self.label_7 = QtWidgets.QLabel(self.basicOperations)
+        self.label_7.setGeometry(QtCore.QRect(20, 160, 101, 16))
+        self.label_7.setObjectName("label_7")
+
 
 
         self.retranslateUi(MainWindow)
@@ -316,121 +334,154 @@ class Ui_MainWindow(object):
         self.pushButton_27.setText(_translate("MainWindow", "Edges Filter"))
         self.pushButton_28.setText(_translate("MainWindow", "Random Filter 2"))
         self.pushButton_29.setText(_translate("MainWindow", "Random Filter 3"))
+        self.resetImageButton.setText(_translate("MainWindow", "Reset Image"))
+        self.label_7.setText(_translate("MainWindow", "Change Contrast:"))
 
     def openImage(self):
         imagePath, _ = QFileDialog.getOpenFileName()
         self.img = cv2.imread(imagePath)
         self.effectImage = self.img
+        self.resetImage = self.img
         pixmap = QPixmap(imagePath)
         self.selectedImage.setPixmap(pixmap)
         cv2.imwrite("temp.jpg", self.img)
+    def reset_image(self):
+        self.img = self.resetImage
+        self.effectImage = self.resetImage
+        cv2.imwrite("temp.jpg", self.img)
+        self.toPixmap()
+
     def rotate_right(self):
+        self.img = cv2.imread("temp.jpg")
         self.img = rotate_right(self.img)
+        self.effectImage = rotate_right(self.effectImage)
         cv2.imwrite("temp.jpg",self.img)
         self.toPixmap()
     def rotate_left(self):
+        self.img = cv2.imread("temp.jpg")
         self.img = rotate_left(self.img)
+        self.effectImage = rotate_left(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def oil_painting(self):
+        self.effectImage = cv2.imread("temp.jpg")
+
 
         self.img = oil_painting(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def water_color(self):
-
-        self.img = watercolor(self.effectImage)
+        self.effectImage = cv2.imread("temp.jpg")
+        self.img = watercolor( self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def bw_pencil(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
 
         self.img = bw_pencil(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def colored_pencil(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = colored_pencil(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def blue_shift(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = blue_shift_filter(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def random_filter_1(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = random_filter(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def pencil_scetch(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = pencil_sketch(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def bileteral(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = bilateral(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def negative_filter(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = negative_filter(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def sharpen(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = sharpen(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def sepia(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = sepia(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
 
     def blur(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = gaussianBlur(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
 
     def emboss(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = emboss(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def cold(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = coldImage(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def warm(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = warmImage(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def black_and_white(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = black_white(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def edges(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = edges_filter(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def gray(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = gray(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def random_filter_2(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = random_filter_2(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def random_filter_3(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = random_filter_3(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
@@ -442,38 +493,58 @@ class Ui_MainWindow(object):
 
 
     def flip_image(self):
+        self.img = cv2.imread("temp.jpg")
         self.img = flip_image(self.img)
         self.img = np.array(self.img)
         self.img = cv2.cvtColor(self.img,cv2.COLOR_RGB2BGR)
+        self.effectImage = flip_image(self.effectImage)
+        self.effectImage = np.array(self.effectImage)
+        self.effectImage = cv2.cvtColor(self.effectImage, cv2.COLOR_RGB2BGR)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def invert_image(self):
+        self.img = cv2.imread("temp.jpg")
         self.img = invert_image(self.img)
+        self.effectImage = invert_image(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def mirror_image(self):
+        self.img = cv2.imread("temp.jpg")
         self.img = mirror_image(self.img)
         self.img = np.array(self.img)
         self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
+        self.effectImage = mirror_image(self.effectImage)
+        self.effectImage = np.array(self.effectImage)
+        self.effectImage = cv2.cvtColor(self.effectImage, cv2.COLOR_RGB2BGR)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def frosted_glass(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         self.img = cv2.resize(self.effectImage,(600,600))
         self.img = frostedgalss(self.img)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def brightness_change(self):
-        temp = cv2.imread("temp.jpg")
-        temp = brighntess_change(self.img,self.brightnessSlider.value())
-        cv2.imwrite("temp.jpg", temp)
+        temp = self.img
+        temp2 = self.effectImage
+        self.img = change_brightness_of_image(self.img,self.brightnessSlider.value())
+        self.img= np.array(self.img)
+        self.img= cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
+        cv2.imwrite("temp.jpg", self.img)
+        self.img = temp
         self.toPixmap()
     def contrast_change(self):
-        temp = cv2.imread("temp.jpg")
-        temp = contrast_change(self.img,self.brightnessSlider.value())
-        cv2.imwrite("temp.jpg", temp)
+        temp = self.img
+        temp2 = self.effectImage
+        self.img = change_contrast_of_image(self.img, self.contrastSlider.value())
+        self.img = np.array(self.img)
+        self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
+        cv2.imwrite("temp.jpg", self.img)
+        self.img = temp
         self.toPixmap()
     def fisheyelast(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         r, g, b = cv2.split(self.effectImage)
         r, g, b = fisheyelast(r), fisheyelast(g), fisheyelast(b)
@@ -489,6 +560,7 @@ class Ui_MainWindow(object):
         cv2.imwrite("temp.jpg", img)
         self.toPixmap()
     def solarization(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         r, g, b = cv2.split(self.effectImage)
         r, g, b = solarization(r), solarization(g), solarization(b)
@@ -498,6 +570,7 @@ class Ui_MainWindow(object):
         self.toPixmap()
 
     def twist(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         r, g, b = cv2.split(self.effectImage)
         r, g, b = twist(r), twist(g), twist(b)
@@ -506,6 +579,7 @@ class Ui_MainWindow(object):
         cv2.imwrite("temp.jpg", img)
         self.toPixmap()
     def bathroom_effect(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         r, g, b = cv2.split(self.effectImage)
         r, g, b = bathroom_effect(r), bathroom_effect(g), bathroom_effect(b)
@@ -514,6 +588,7 @@ class Ui_MainWindow(object):
         cv2.imwrite("temp.jpg", img)
         self.toPixmap()
     def bathroom_effect2(self):
+        self.effectImage = cv2.imread("temp.jpg")
 
         r, g, b = cv2.split(self.effectImage)
         r, g, b = bath2_effect(r), bath2_effect(g), bath2_effect(b)
@@ -523,6 +598,7 @@ class Ui_MainWindow(object):
         self.toPixmap()
 
     def swirl(self):
+        self.effectImage = cv2.imread("temp.jpg")
         r, g, b = cv2.split(self.effectImage)
         koef = 0.7
         r, g, b = swirl(r, koef), swirl(g, koef), swirl(b, koef)
@@ -542,13 +618,11 @@ class Ui_MainWindow(object):
             print("nope")
         else:
             cropped_img = crop_image(cropped_img, w, h, x, y)
-            self.effectImage = cropped_img
-
+            self.effectImage = crop_image(self.effectImage, w, h, x, y)
             cv2.imwrite("temp.jpg", cropped_img)
             self.img = cropped_img
             url = "temp.jpg"
             qImg = QPixmap(url)
-            self.cropCount = self.cropCount + 1
             self.selectedImage.setPixmap(qImg)
 
     def toPixmap(self):
