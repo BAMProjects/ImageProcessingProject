@@ -27,7 +27,7 @@ class Ui_MainWindow(object):
     resetImage = None
     effectPressed = False
     def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
+        MainWindow.setObjectName("Image Process Homework")
         MainWindow.resize(869, 450)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -294,7 +294,7 @@ class Ui_MainWindow(object):
         self.label_7.setGeometry(QtCore.QRect(20, 160, 101, 16))
         self.label_7.setObjectName("label_7")
         self.gridLayoutWidget_2 = QtWidgets.QWidget(self.tab_2)
-        self.gridLayoutWidget_2.setGeometry(QtCore.QRect(10, 20, 451, 111))
+        self.gridLayoutWidget_2.setGeometry(QtCore.QRect(10, 20, 451, 161))
         self.gridLayoutWidget_2.setObjectName("gridLayoutWidget_2")
         self.gridLayout = QtWidgets.QGridLayout(self.gridLayoutWidget_2)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -328,10 +328,22 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.pushButton_35, 2, 1, 1, 1)
         self.checkBox.stateChanged.connect(self.mixChange)
         self.progressBar = QtWidgets.QProgressBar(self.centralwidget)
-        self.progressBar.setGeometry(QtCore.QRect(100, 20, 118, 23))
+        self.progressBar.setGeometry(QtCore.QRect(360, 360, 118, 23))
         self.progressBar.setProperty("value", 0)
         self.progressBar.setObjectName("progressBar")
         self.progressBar.hide()
+        self.pushButton_36 = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.pushButton_36.setObjectName("pushButton_36")
+        self.gridLayout.addWidget(self.pushButton_36, 3, 0, 1, 1)
+        self.pushButton_36.clicked.connect(self.log_transform)
+        self.pushButton_37 = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.pushButton_37.setObjectName("pushButton_37")
+        self.pushButton_37.clicked.connect(self.negative_log_transform)
+        self.gridLayout.addWidget(self.pushButton_37, 3, 1, 1, 1)
+        self.pushButton_38 = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.pushButton_38.setObjectName("pushButton_38")
+        self.pushButton_38.clicked.connect(self.inverse_log_transform)
+        self.gridLayout.addWidget(self.pushButton_38, 4, 0, 1, 1)
 
 
 
@@ -397,6 +409,9 @@ class Ui_MainWindow(object):
         self.pushButton_34.setText(_translate("MainWindow", "Detail Enchanment"))
         self.checkBox.setText(_translate("MainWindow", "Mix Mode"))
         self.pushButton_35.setText(_translate("MainWindow", "Edge Detection"))
+        self.pushButton_37.setText(_translate("MainWindow", "Inverse Log Transform"))
+        self.pushButton_38.setText(_translate("MainWindow", "Negative Transform"))
+        self.pushButton_36.setText(_translate("MainWindow", "Log Transform"))
 
     def openImage(self):
         imagePath, _ = QFileDialog.getOpenFileName()
@@ -691,7 +706,29 @@ class Ui_MainWindow(object):
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def log_transform(self):
-        logtransform(self.img)
+        if (self.checkBox.isChecked()):
+            self.enchanmentImage = cv2.imread("temp.jpg")
+        else:
+            self.enchanmentImage = cv2.imread("temp2.jpg")
+        self.img = logtransform(self.enchanmentImage)
+        cv2.imwrite("temp.jpg", self.img)
+        self.toPixmap()
+    def negative_log_transform(self):
+        if (self.checkBox.isChecked()):
+            self.enchanmentImage = cv2.imread("temp.jpg")
+        else:
+            self.enchanmentImage = cv2.imread("temp2.jpg")
+        self.img = negativetransform_gray(self.enchanmentImage)
+        cv2.imwrite("temp.jpg", self.img)
+        self.toPixmap()
+    def inverse_log_transform(self):
+        if (self.checkBox.isChecked()):
+            self.enchanmentImage = cv2.imread("temp.jpg")
+        else:
+            self.enchanmentImage = cv2.imread("temp2.jpg")
+        self.img = inverselogtransform(self.enchanmentImage)
+        cv2.imwrite("temp.jpg", self.img)
+        self.toPixmap()
     def detail_enchanment(self):
         if (self.checkBox.isChecked()):
             self.enchanmentImage = cv2.imread("temp.jpg")

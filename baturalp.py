@@ -295,18 +295,20 @@ def gamma_correction(image):
     return image
 
 def logtransform(img):
-    c = 255 / math.log(256, 10)
-    c = 1
-    h, w, d = img.shape
-    r, g, b = cv2.split(img)
-    for ch in (r, g, b):
-      for y in range(h):
-        for x in range(w):
-          f = ch[y, x]
-          f = round(c * math.log(float(1 + f), 10))
-          ch[y, x] = f
-    cv2.imshow('log', np.dstack((r, g, b)))
-    cv2.waitKey(0)
+    c=255/math.log(256,10)
+    c=255/(np.log(1+np.max(img)))
+    np.seterr(divide='ignore')
+    #c=1
+    #h,w,d=img.shape
+    img=(c*np.log(1+img))
+    img=np.array(img,dtype=np.uint8)
+    np.seterr(divide='warn')
+    return img
+def inverselogtransform(img):
+    c=255/(np.log(1+np.max(img)))
+    ilog=np.exp(img/c)-1
+    ilog=np.array(ilog,dtype=np.uint8)
+    return ilog
 def pencil_sketch(img):
   # Convert the image into grayscale image
   gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -317,6 +319,11 @@ def pencil_sketch(img):
   # Convert the image into pencil sketch
   cartoon = cv2.divide(gray, gray_blur, scale=250.0)
   return cartoon
+def negativetransform_gray(img):
+    img=255-img
+
+
+    return img
 
 def histogram(img):
       h, w = img.shape
@@ -442,8 +449,6 @@ def random_filter_3(image):
   return cv2.merge((red_channel, green_channel, blue_channel))
 
 
-img = change_brightness_of_image(img,0.5)
+img = logtransform(img)
 #PIL format to cv2 format
-img = np.array(img)
-img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
 cv2.imwrite("imgtest.jpg",img)
