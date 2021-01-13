@@ -16,15 +16,19 @@ from PIL import Image
 from baturalp import *
 import cv2
 import numpy as np
+import os
+import time
 
 
 class Ui_MainWindow(object):
     img = None
     effectImage= None
+    enchanmentImage= None
     resetImage = None
+    effectPressed = False
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(869, 661)
+        MainWindow.resize(869, 450)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.selectImageButton = QtWidgets.QPushButton(self.centralwidget)
@@ -39,7 +43,15 @@ class Ui_MainWindow(object):
         self.selectedImage = QtWidgets.QLabel(self.centralwidget)
         self.selectedImage.setGeometry(QtCore.QRect(10, 50, 331, 291))
         self.selectedImage.setText("")
-        self.selectedImage.setPixmap(QtGui.QPixmap("../../ImageProcessingProject/test.jpg"))
+        self.selectedImage.setPixmap(QtGui.QPixmap("test.jpg"))
+        self.img = cv2.imread("test.jpg")
+        self.effectImage = self.img
+        self.resetImage = self.img
+        self.enchanmentImage = self.img
+        pixmap = QPixmap("test.jpg")
+        self.selectedImage.setPixmap(pixmap)
+        cv2.imwrite("temp.jpg", self.img)
+        cv2.imwrite("temp2.jpg", self.img)
         self.selectedImage.setScaledContents(True)
         self.selectedImage.setObjectName("selectedImage")
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
@@ -119,8 +131,10 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.actionSave = QtWidgets.QAction(MainWindow)
         self.actionSave.setObjectName("actionSave")
+        self.actionSave.triggered.connect(self.save_image)
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
+        self.actionExit.triggered.connect(self.exit)
         self.menuFile.addAction(self.actionSave)
         self.menuFile.addAction(self.actionExit)
         self.menubar.addAction(self.menuFile.menuAction())
@@ -279,6 +293,45 @@ class Ui_MainWindow(object):
         self.label_7 = QtWidgets.QLabel(self.basicOperations)
         self.label_7.setGeometry(QtCore.QRect(20, 160, 101, 16))
         self.label_7.setObjectName("label_7")
+        self.gridLayoutWidget_2 = QtWidgets.QWidget(self.tab_2)
+        self.gridLayoutWidget_2.setGeometry(QtCore.QRect(10, 20, 451, 111))
+        self.gridLayoutWidget_2.setObjectName("gridLayoutWidget_2")
+        self.gridLayout = QtWidgets.QGridLayout(self.gridLayoutWidget_2)
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout.setObjectName("gridLayout")
+        self.pushButton_33 = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.pushButton_33.setObjectName("pushButton_33")
+        self.pushButton_33.clicked.connect(self.otsu_binarization)
+        self.gridLayout.addWidget(self.pushButton_33, 0, 1, 1, 1)
+        self.pushButton_31 = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.pushButton_31.setObjectName("pushButton_31")
+        self.pushButton_31.clicked.connect(self.gama_correction)
+        self.gridLayout.addWidget(self.pushButton_31, 1, 0, 1, 1)
+        self.pushButton_32 = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.pushButton_32.setObjectName("pushButton_32")
+        self.pushButton_32.clicked.connect(self.clahe)
+        self.gridLayout.addWidget(self.pushButton_32, 0, 0, 1, 1)
+        self.pushButton_30 = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.pushButton_30.setObjectName("pushButton_30")
+        self.pushButton_30.clicked.connect(self.histogram)
+        self.gridLayout.addWidget(self.pushButton_30, 1, 1, 1, 1)
+        self.pushButton_34 = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.pushButton_34.setObjectName("pushButton_34")
+        self.pushButton_34.clicked.connect(self.detail_enchanment)
+        self.gridLayout.addWidget(self.pushButton_34, 2, 0, 1, 1)
+        self.checkBox = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkBox.setGeometry(QtCore.QRect(460, 20, 70, 17))
+        self.checkBox.setObjectName("checkBox")
+        self.pushButton_35 = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.pushButton_35.setObjectName("pushButton_35")
+        self.pushButton_35.clicked.connect(self.edgesEnchanment)
+        self.gridLayout.addWidget(self.pushButton_35, 2, 1, 1, 1)
+        self.checkBox.stateChanged.connect(self.mixChange)
+        self.progressBar = QtWidgets.QProgressBar(self.centralwidget)
+        self.progressBar.setGeometry(QtCore.QRect(100, 20, 118, 23))
+        self.progressBar.setProperty("value", 0)
+        self.progressBar.setObjectName("progressBar")
+        self.progressBar.hide()
 
 
 
@@ -301,6 +354,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.basicOperations), _translate("MainWindow", "Basic Operations"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Image Enchancement"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Artistic Effects and Filters"))
+        self.tabWidget.currentChanged.connect(self.onTabChange)
         self.pushButton.setText(_translate("MainWindow", "Rotate Left"))
         self.pushButton_2.setText(_translate("MainWindow", "Rotate Right"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
@@ -336,231 +390,441 @@ class Ui_MainWindow(object):
         self.pushButton_29.setText(_translate("MainWindow", "Random Filter 3"))
         self.resetImageButton.setText(_translate("MainWindow", "Reset Image"))
         self.label_7.setText(_translate("MainWindow", "Change Contrast:"))
+        self.pushButton_33.setText(_translate("MainWindow", "Otsu Binarization"))
+        self.pushButton_31.setText(_translate("MainWindow", "Gamma Correction"))
+        self.pushButton_32.setText(_translate("MainWindow", "Clahe"))
+        self.pushButton_30.setText(_translate("MainWindow", "Histogram"))
+        self.pushButton_34.setText(_translate("MainWindow", "Detail Enchanment"))
+        self.checkBox.setText(_translate("MainWindow", "Mix Mode"))
+        self.pushButton_35.setText(_translate("MainWindow", "Edge Detection"))
 
     def openImage(self):
         imagePath, _ = QFileDialog.getOpenFileName()
-        self.img = cv2.imread(imagePath)
-        self.effectImage = self.img
-        self.resetImage = self.img
-        pixmap = QPixmap(imagePath)
-        self.selectedImage.setPixmap(pixmap)
-        cv2.imwrite("temp.jpg", self.img)
+        if(imagePath==""):
+            self.img = cv2.imread("test.jpg")
+            self.effectImage = self.img
+            self.resetImage = self.img
+            self.enchanmentImage = self.img
+            pixmap = QPixmap("test.jpg")
+            self.selectedImage.setPixmap(pixmap)
+            cv2.imwrite("temp.jpg", self.img)
+            cv2.imwrite("temp2.jpg", self.img)
+        else:
+            self.img = cv2.imread(imagePath)
+            self.effectImage = self.img
+            self.resetImage = self.img
+            self.enchanmentImage = self.img
+            pixmap = QPixmap(imagePath)
+            self.selectedImage.setPixmap(pixmap)
+            cv2.imwrite("temp.jpg", self.img)
+            cv2.imwrite("temp2.jpg", self.img)
+    def mixChange(self):
+        self.reset_image()
+    def exit(self):
+        sys.exit(app.exec_())
+
+    def save_image(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(directory="processed_image.jpg")
+        image = cv2.imread("temp.jpg")
+        cv2.imwrite(fileName,image)
+
+
+
+
+
+
+    def onTabChange(self,i):
+        if(i==1 or i==2):
+            self.pushButton.hide()
+            self.pushButton_2.hide()
+            self.brightnessSlider.setValue(self.brightnessSlider.value())
+            self.contrastSlider.setValue(self.contrastSlider.value())
+
+        else:
+            self.pushButton.show()
+            self.pushButton_2.show()
+
+
+
+
+
+
+
     def reset_image(self):
         self.img = self.resetImage
         self.effectImage = self.resetImage
+        self.enchanmentImage = 0
+        self.brightnessSlider.setValue(10)
+        self.contrastSlider.setValue(10)
         cv2.imwrite("temp.jpg", self.img)
+        cv2.imwrite("temp2.jpg", self.img)
         self.toPixmap()
 
+
     def rotate_right(self):
-        self.img = cv2.imread("temp.jpg")
-        self.img = rotate_right(self.img)
-        self.effectImage = rotate_right(self.effectImage)
-        cv2.imwrite("temp.jpg",self.img)
-        self.toPixmap()
+
+
+            self.img = cv2.imread("temp.jpg")
+            self.img = rotate_right(self.img)
+            self.effectImage = rotate_right(self.effectImage)
+            cv2.imwrite("temp.jpg", self.img)
+            self.toPixmap()
+
+
+
+
+
+
+
+
     def rotate_left(self):
-        self.img = cv2.imread("temp.jpg")
-        self.img = rotate_left(self.img)
-        self.effectImage = rotate_left(self.effectImage)
-        cv2.imwrite("temp.jpg", self.img)
-        self.toPixmap()
+
+            self.img = cv2.imread("temp.jpg")
+            self.img = rotate_left(self.img)
+            self.effectImage = rotate_left(self.effectImage)
+            cv2.imwrite("temp.jpg", self.img)
+            self.toPixmap()
+
     def oil_painting(self):
-        self.effectImage = cv2.imread("temp.jpg")
+
+        if(self.checkBox.isChecked()):
+           self.effectImage = cv2.imread("temp.jpg")
+
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
+
 
 
         self.img = oil_painting(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def water_color(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
         self.img = watercolor( self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def bw_pencil(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
 
         self.img = bw_pencil(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def colored_pencil(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = colored_pencil(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def blue_shift(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = blue_shift_filter(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def random_filter_1(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = random_filter(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def pencil_scetch(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = pencil_sketch(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def bileteral(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = bilateral(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def negative_filter(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = negative_filter(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def sharpen(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = sharpen(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def sepia(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = sepia(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
 
     def blur(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = gaussianBlur(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
 
     def emboss(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = emboss(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def cold(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = coldImage(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def warm(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = warmImage(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def black_and_white(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = black_white(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def edges(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = edges_filter(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
+    def edgesEnchanment(self):
+        if (self.checkBox.isChecked()):
+            self.enchanmentImage = cv2.imread("temp.jpg")
+        else:
+            self.enchanmentImage = cv2.imread("temp2.jpg")
+
+        self.img = edges_filter(self.enchanmentImage)
+        cv2.imwrite("temp.jpg", self.img)
+        self.toPixmap()
     def gray(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = gray(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def random_filter_2(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = random_filter_2(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def random_filter_3(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = random_filter_3(self.effectImage)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def gama_correction(self):
-        gamma_correction(self.img)
+        if (self.checkBox.isChecked()):
+            self.enchanmentImage = cv2.imread("temp.jpg")
+        else:
+            self.enchanmentImage = cv2.imread("temp2.jpg")
+        self.img = gamma_correction(self.enchanmentImage)
+        cv2.imwrite("temp.jpg", self.img)
+        self.toPixmap()
     def log_transform(self):
         logtransform(self.img)
+    def detail_enchanment(self):
+        if (self.checkBox.isChecked()):
+            self.enchanmentImage = cv2.imread("temp.jpg")
+        else:
+            self.enchanmentImage = cv2.imread("temp2.jpg")
+        self.img = detail_enhancement(self.enchanmentImage)
+        cv2.imwrite("temp.jpg", self.img)
+        self.toPixmap()
 
 
     def flip_image(self):
-        self.img = cv2.imread("temp.jpg")
-        self.img = flip_image(self.img)
-        self.img = np.array(self.img)
-        self.img = cv2.cvtColor(self.img,cv2.COLOR_RGB2BGR)
-        self.effectImage = flip_image(self.effectImage)
-        self.effectImage = np.array(self.effectImage)
-        self.effectImage = cv2.cvtColor(self.effectImage, cv2.COLOR_RGB2BGR)
-        cv2.imwrite("temp.jpg", self.img)
-        self.toPixmap()
+            self.img = cv2.imread("temp.jpg")
+            self.img = flip_image(self.img)
+            self.img = np.array(self.img)
+            self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
+            self.effectImage = flip_image(self.effectImage)
+            self.effectImage = np.array(self.effectImage)
+            self.effectImage = cv2.cvtColor(self.effectImage, cv2.COLOR_RGB2BGR)
+            cv2.imwrite("temp.jpg", self.img)
+            cv2.imwrite("temp2.jpg", self.img)
+            self.toPixmap()
+
+
+
     def invert_image(self):
-        self.img = cv2.imread("temp.jpg")
+        self.img = cv2.imread("temp2.jpg")
         self.img = invert_image(self.img)
         self.effectImage = invert_image(self.effectImage)
+        cv2.imwrite("temp2.jpg", self.img)
         cv2.imwrite("temp.jpg", self.img)
-        self.toPixmap()
+        self.toPixmap2()
     def mirror_image(self):
-        self.img = cv2.imread("temp.jpg")
-        self.img = mirror_image(self.img)
-        self.img = np.array(self.img)
-        self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
-        self.effectImage = mirror_image(self.effectImage)
-        self.effectImage = np.array(self.effectImage)
-        self.effectImage = cv2.cvtColor(self.effectImage, cv2.COLOR_RGB2BGR)
-        cv2.imwrite("temp.jpg", self.img)
-        self.toPixmap()
+
+           self.img = cv2.imread("temp.jpg")
+           self.img = mirror_image(self.img)
+           self.img = np.array(self.img)
+           self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
+           self.effectImage = mirror_image(self.effectImage)
+           self.effectImage = np.array(self.effectImage)
+           self.effectImage = cv2.cvtColor(self.effectImage, cv2.COLOR_RGB2BGR)
+           cv2.imwrite("temp.jpg", self.img)
+           cv2.imwrite("temp2.jpg", self.img)
+           self.toPixmap()
+
     def frosted_glass(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         self.img = cv2.resize(self.effectImage,(600,600))
         self.img = frostedgalss(self.img)
         cv2.imwrite("temp.jpg", self.img)
         self.toPixmap()
     def brightness_change(self):
-        temp = self.img
-        temp2 = self.effectImage
-        self.img = change_brightness_of_image(self.img,self.brightnessSlider.value())
-        self.img= np.array(self.img)
-        self.img= cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
-        cv2.imwrite("temp.jpg", self.img)
-        self.img = temp
-        self.toPixmap()
+
+
+
+
+
+            temp = self.img
+            temp2 = self.effectImage
+            self.img = change_brightness_of_image(self.img, self.brightnessSlider.value())
+            self.img = np.array(self.img)
+            self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
+            self.effectImage = change_brightness_of_image(self.effectImage, self.brightnessSlider.value())
+            self.effectImage = np.array(self.effectImage)
+            self.effectImage = cv2.cvtColor(self.effectImage, cv2.COLOR_RGB2BGR)
+            self.img = change_contrast_of_image(self.img, self.contrastSlider.value())
+            self.img = np.array(self.img)
+            self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
+            self.effectImage = change_contrast_of_image(self.effectImage, self.contrastSlider.value())
+            self.effectImage = np.array(self.effectImage)
+            self.effectImage = cv2.cvtColor(self.effectImage, cv2.COLOR_RGB2BGR)
+            cv2.imwrite("temp.jpg", self.img)
+            self.img = temp
+            self.effectImage = temp2
+            self.toPixmap()
     def contrast_change(self):
-        temp = self.img
-        temp2 = self.effectImage
-        self.img = change_contrast_of_image(self.img, self.contrastSlider.value())
-        self.img = np.array(self.img)
-        self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
-        cv2.imwrite("temp.jpg", self.img)
-        self.img = temp
-        self.toPixmap()
+           temp = self.img
+           self.img = change_brightness_of_image(self.img, self.brightnessSlider.value())
+           self.img = np.array(self.img)
+           self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
+           self.effectImage = change_brightness_of_image(self.effectImage, self.contrastSlider.value())
+           self.effectImage = np.array(self.effectImage)
+           self.effectImage = cv2.cvtColor(self.effectImage, cv2.COLOR_RGB2BGR)
+           self.img = change_contrast_of_image(self.img, self.contrastSlider.value())
+           self.img = np.array(self.img)
+           self.img = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
+           self.effectImage = change_contrast_of_image(self.effectImage, self.contrastSlider.value())
+           self.effectImage = np.array(self.effectImage)
+           self.effectImage = cv2.cvtColor(self.effectImage, cv2.COLOR_RGB2BGR)
+           cv2.imwrite("temp.jpg", self.img)
+           self.img = temp
+           self.toPixmap()
     def fisheyelast(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         r, g, b = cv2.split(self.effectImage)
         r, g, b = fisheyelast(r), fisheyelast(g), fisheyelast(b)
         img = np.dstack((r, g, b))
+        self.progressBar.show()
+        for i in range(101):
+            time.sleep(0.05)
+            self.progressBar.setValue(i)
         self.img = img
         cv2.imwrite("temp.jpg", img)
         self.toPixmap()
+        self.progressBar.hide()
     def histogram(self):
-        r, g, b = cv2.split(self.img)
+        if (self.checkBox.isChecked()):
+            self.enchanmentImage = cv2.imread("temp.jpg")
+        else:
+            self.enchanmentImage = cv2.imread("temp2.jpg")
+        r, g, b = cv2.split(self.enchanmentImage)
         r, g, b = histogram(r), histogram(g), histogram(b)
         img = np.dstack((r, g, b))
+        self.progressBar.show()
+        for i in range(101):
+            time.sleep(0.03)
+            self.progressBar.setValue(i)
+        self.progressBar.hide()
         self.img = img
         cv2.imwrite("temp.jpg", img)
         self.toPixmap()
     def solarization(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         r, g, b = cv2.split(self.effectImage)
         r, g, b = solarization(r), solarization(g), solarization(b)
@@ -570,7 +834,10 @@ class Ui_MainWindow(object):
         self.toPixmap()
 
     def twist(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         r, g, b = cv2.split(self.effectImage)
         r, g, b = twist(r), twist(g), twist(b)
@@ -579,30 +846,54 @@ class Ui_MainWindow(object):
         cv2.imwrite("temp.jpg", img)
         self.toPixmap()
     def bathroom_effect(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         r, g, b = cv2.split(self.effectImage)
         r, g, b = bathroom_effect(r), bathroom_effect(g), bathroom_effect(b)
         img = np.dstack((r, g, b))
+        self.progressBar.show()
+        for i in range(101):
+            time.sleep(0.05)
+            self.progressBar.setValue(i)
+        self.progressBar.hide()
         self.img = img
         cv2.imwrite("temp.jpg", img)
         self.toPixmap()
     def bathroom_effect2(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
 
         r, g, b = cv2.split(self.effectImage)
         r, g, b = bath2_effect(r), bath2_effect(g), bath2_effect(b)
         img = np.dstack((r, g, b))
+        self.progressBar.show()
+        for i in range(101):
+            time.sleep(0.05)
+            self.progressBar.setValue(i)
+        self.progressBar.hide()
         self.img = img
         cv2.imwrite("temp.jpg", img)
         self.toPixmap()
 
     def swirl(self):
-        self.effectImage = cv2.imread("temp.jpg")
+        if (self.checkBox.isChecked()):
+            self.effectImage = cv2.imread("temp.jpg")
+        else:
+            self.effectImage = cv2.imread("temp2.jpg")
         r, g, b = cv2.split(self.effectImage)
         koef = 0.7
         r, g, b = swirl(r, koef), swirl(g, koef), swirl(b, koef)
         img = np.dstack((r, g, b))
+        self.progressBar.show()
+        for i in range(101):
+            time.sleep(0.05)
+            self.progressBar.setValue(i)
+        self.progressBar.hide()
         self.img = img
         cv2.imwrite("temp.jpg", img)
         self.toPixmap()
@@ -615,18 +906,56 @@ class Ui_MainWindow(object):
         cropped_img = cv2.imread("temp.jpg")
         height, width, channel = cropped_img.shape
         if((y+h)>=width or (x+w)>=height):
-            print("nope")
+            print("no")
         else:
-            cropped_img = crop_image(cropped_img, w, h, x, y)
-            self.effectImage = crop_image(self.effectImage, w, h, x, y)
-            cv2.imwrite("temp.jpg", cropped_img)
-            self.img = cropped_img
-            url = "temp.jpg"
-            qImg = QPixmap(url)
-            self.selectedImage.setPixmap(qImg)
+               cropped_img = crop_image(cropped_img, w, h, x, y)
+               self.effectImage = crop_image(self.effectImage, w, h, x, y)
+               cv2.imwrite("temp.jpg", cropped_img)
+               cv2.imwrite("temp2.jpg", cropped_img)
+               self.img = cropped_img
+               url = "temp.jpg"
+               qImg = QPixmap(url)
+               self.selectedImage.setPixmap(qImg)
+               self.lineEdit.setText("")
+               self.lineEdit_2.setText("")
+               self.lineEdit_3.setText("")
+               self.lineEdit_4.setText("")
+
+
+    def clahe(self):
+        if (self.checkBox.isChecked()):
+            self.enchanmentImage = cv2.imread("temp.jpg")
+        else:
+            self.enchanmentImage = cv2.imread("temp2.jpg")
+        self.img = clahe(self.enchanmentImage)
+        cv2.imwrite("temp.jpg", self.img)
+        self.toPixmap()
+    def otsu_binarization(self):
+        if (self.checkBox.isChecked()):
+            self.enchanmentImage = cv2.imread("temp.jpg")
+        else:
+            self.enchanmentImage = cv2.imread("temp2.jpg")
+        self.img = otsu_binarization(self.enchanmentImage)
+        cv2.imwrite("temp.jpg", self.img)
+        self.toPixmap()
+
 
     def toPixmap(self):
         url = "temp.jpg"
+        qImg = QPixmap(url)
+        self.selectedImage.setPixmap(qImg)
+        """height, width, channel = self.img.shape
+        bytesPerLine = 3 * width
+        qImg = QImage(self.img.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        pixmap = QPixmap.fromImage(qImg)
+        self.selectedImage.setPixmap(pixmap)"""
+    """def toPixmap2(self):
+        rgb_image = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+        PIL_image = Image.fromarray(rgb_image).convert('RGB')
+        pixmap = QPixmap.fromImage(ImageQt(PIL_image))
+        self.selectedImage.setPixmap(pixmap)"""
+    def toPixmap2(self):
+        url = "temp2.jpg"
         qImg = QPixmap(url)
         self.selectedImage.setPixmap(qImg)
         """height, width, channel = self.img.shape
@@ -654,3 +983,6 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
+
+
+

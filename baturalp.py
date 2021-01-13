@@ -117,15 +117,13 @@ def clahe(image):
   image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
   clahe = cv2.createCLAHE(clipLimit=40)
   gray_img_clahe = clahe.apply(image)
-  cv2.imshow("Images", gray_img_clahe)
-  cv2.waitKey(0)
-  cv2.destroyAllWindows()
+  #cv2.imshow("Images", gray_img_clahe)
+  #cv2.waitKey(0)
+  #cv2.destroyAllWindows()
+  gray_img_clahe = cv2.cvtColor(gray_img_clahe,cv2.COLOR_RGB2BGR)
   return gray_img_clahe
 def otsu_binarization(image):
-  gray_image = cv2.imread("test.jpg",0)
-  cv2.imshow("Images", gray_image)
-  cv2.waitKey(0)
-  cv2.destroyAllWindows()
+  gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
   ret, thresh1 = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
   return thresh1
 def oil_painting(image):
@@ -278,7 +276,8 @@ def solarization(img):
 
 
 def gamma_correction(image):
-  for gama in np.arange(0.5, 4, 0.5): ## kullanıcıdan alınabilir
+  #for gama in np.arange(0.5, 4, 0.5): ## kullanıcıdan alınabilir
+    gama = 2.5
     print(gama)
     ingama = 1.0 / gama
     table = np.array([((i / 255.0)**gama) * 255
@@ -289,10 +288,11 @@ def gamma_correction(image):
     # cv2.waitKey(5000)
 
     image = cv2.LUT(image, table)
-    cv2.imshow(str(gama), image) ##gama için kullanılcak
+    #cv2.imshow(str(gama), image) ##gama için kullanılcak
     #cv2.imshow('tstgama', new_image)
-    cv2.waitKey(1000)
-    cv2.destroyAllWindows()
+    #cv2.waitKey(1000)
+    #cv2.destroyAllWindows()
+    return image
 
 def logtransform(img):
     c = 255 / math.log(256, 10)
